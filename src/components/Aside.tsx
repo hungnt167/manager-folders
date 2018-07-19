@@ -1,13 +1,88 @@
+import * as Actions from 'actions/panel';
+import classNames from "classnames";
 import Tree, {TreeNode} from 'rc-tree';
+import 'rc-tree/assets/index.css';
 import * as React from "react";
-import {gData} from './util';
+import { connect } from 'react-redux';
+import { Dispatch } from 'redux';
+import * as Types from 'types/panel';
 
-export class Aside extends React.Component {
+const FolderIcon = ({ selected }:{ selected: any }) => (
+  <span
+    className={classNames(
+      'glyphicon glyphicon-folder-close',
+      selected && 'glyphicon glyphicon-folder-open',
+    )}
+  />
+);
+
+const FileIcon = ({ selected }:{ selected: any }) => (
+  <span
+    className={classNames(
+      'glyphicon glyphicon-file',
+      selected && 'glyphicon glyphicon-eye-open',
+    )}
+  />
+);
+
+const gData = [
+    {
+        "children": [
+            {
+                "children": [
+                    {
+                        "isFile": true,
+                        "key": "0-0-1-0-key",
+                        "title": "File 1"
+                    },
+                    {
+                        "isFile": true,
+                        "key": "0-0-1-1-key",
+                        "title": "File 2"
+                    },
+                    {
+                        "isFile": true,
+                        "key": "0-0-1-2-key",
+                        "title": "File 3"
+                    }
+                ],
+                "key": "0-0-1-key",
+                "title": "Folder 3"
+            },
+            {
+                "key": "0-0-2-key",
+                "title": "Folder 2"
+            }
+        ],
+        "key": "0-0-key",
+        "title": "Folder 1"
+    }
+];
+
+interface IAsideState {
+  autoExpandParent: boolean,
+  expandedKeys: string[],
+  gData: object[],
+  selectedNode: any
+}
+
+// interface IAsideProps {
+//   ref?(): void,
+//   selectNode?(): void
+// }
+
+// interface IAsideDispatch {
+//   selectNode?(): void
+// }
+
+export class Aside extends React.Component<any, IAsideState> {
     public state = {
         autoExpandParent: true,
         expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
         gData,
+        selectedNode: null
     };
+
     public onDragStart = (info: any) => {
         return info;
     };
@@ -35,6 +110,16 @@ export class Aside extends React.Component {
         };
         const data = [...this.state.gData];
         let dragObj: any;
+        let dropObj: any;
+        
+        loop(data, dropKey, (item: any) => {
+            dropObj = item;
+        });
+
+        if (dropObj.isFile) {
+            return;
+        }
+
         loop(data, dragKey, ((item: any, index: any, arr:any) => {
             arr.splice(index, 1);
             dragObj = item;
@@ -54,7 +139,6 @@ export class Aside extends React.Component {
         } else {
             loop(data, dropKey, (item: any) => {
                 item.children = item.children || [];
-                // where to insert 示例添加到尾部，可以是随意位置
                 item.children.push(dragObj);
             });
         }
@@ -69,16 +153,27 @@ export class Aside extends React.Component {
         });
     };
 
+    public onSelect = (selectedKeys: any, e:{selected: boolean, selectedNodes: any, node: any, event: any, nativeEvent: any}) => {
+        if (e.node) {
+            this.setState({selectedNode: e.node});
+            this.props.selectNode(e.node);
+        }
+    };
+
     public render() {
         const loop = (data: any) => {
             return data.map((item: any) => {
                 if (item.children && item.children.length) {
-                    return <TreeNode key={item.key} title={item.title}>{loop(item.children)}</TreeNode>;
+                    return <TreeNode icon={FolderIcon} key={item.key} title={item.title}>{loop(item.children)}</TreeNode>;
                 }
-                return <TreeNode key={item.key} title={item.title}/>;
+
+                const Icon = item.isFile ? FileIcon : FolderIcon;
+
+                return <TreeNode icon={Icon} key={item.key} title={item.title}/>;
             });
         };
-        return (<div className={"col-md-3"}>
+
+        return (<div className={"col-md-3 nopadding"}>
             <div className="draggable-container">
                 <Tree
                     expandedKeys={this.state.expandedKeys}
@@ -87,6 +182,7 @@ export class Aside extends React.Component {
                     onDragStart={this.onDragStart}
                     onDragEnter={this.onDragEnter}
                     onDrop={this.onDrop}
+                    onSelect={this.onSelect}
                 >
                     {loop(this.state.gData)}
                 </Tree>
@@ -94,3 +190,16 @@ export class Aside extends React.Component {
         </div>);
     }
 }
+
+export function mapStateToProps() {
+  return {
+  }
+}
+
+export function mapDispatchToProps(dispatch: Dispatch<Types.PanelAction>) {
+  return {
+      selectNode: (node: any) => dispatch(Actions.asideSelectNode(node))
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Aside);

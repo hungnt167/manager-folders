@@ -1,20 +1,15 @@
-import {IRequestState} from "store/shared/IRequestState";
+import {Action} from "redux";
 
-export const LOGIN_ACTION = 'LOGIN_ACTION';
-export type LOGIN_ACTION = typeof LOGIN_ACTION;
+export const ASIDE_SELECT_NODE_ACTION = 'ASIDE_SELECT_NODE_ACTION';
+export type ASIDE_SELECT_NODE_ACTION = typeof ASIDE_SELECT_NODE_ACTION;
 
-export const LOGIN_ACTION_START = 'LOGIN_ACTION_START';
-export type LOGIN_ACTION_START = typeof LOGIN_ACTION_START;
 
-export const LOGIN_ACTION_SUCCESS = 'LOGIN_ACTION_SUCCESS';
-export type LOGIN_ACTION_SUCCESS = typeof LOGIN_ACTION_SUCCESS;
-
-export const LOGIN_ACTION_ERROR = 'LOGIN_ACTION_ERROR';
-export type LOGIN_ACTION_ERROR = typeof LOGIN_ACTION_ERROR;
-
-export const TOKEN_KEY = 'TOKEN_KEY';
-
-export interface IPanelState extends IRequestState{
-    password: string
-    username: string,
+export interface IPanelState {
+    node: any
 }
+
+export interface IPanelAsideSelectNodeAction extends Action{
+    node: any
+}
+
+export type PanelAction = IPanelAsideSelectNodeAction;

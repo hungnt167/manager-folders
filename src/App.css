@@ -3,3 +3,20 @@
 }
 
 .navbar { margin-bottom: 0 }
+
+.nopadding {
+   padding: 0 !important;
+   margin: 0 !important;
+}
+
+.draggable-container {
+    margin: 0;
+    width: 100%;
+    height: calc(100vh - 52px);
+    overflow: auto;
+    border-right: 1px solid #ccc;
+}
+
+.rc-tree li .rc-tree-node-content-wrapper {
+	height: 6vh;
+}
