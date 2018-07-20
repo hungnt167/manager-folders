@@ -62,6 +62,8 @@ class Header extends React.Component<any, IHeaderStates> {
                             controlId="formBasicText"
                         >
                             <FormControl
+                                autoFocus={true}
+                                onChange={this.onChangeName}
                                 value={this.state.name}
                                 type="text"
                                 placeholder="Enter name"
@@ -77,11 +79,17 @@ class Header extends React.Component<any, IHeaderStates> {
         );
     }
 
-    public confirmAdd = () => () => {
+    public onChangeName = (e:any) => {
+        this.setState({ name: e.target.value });
+    };
+
+    public confirmAdd = () => (event: React.MouseEvent<Button>) => {
         this.props.add({
             isFile: this.state.isFileMode,
             title: this.state.name
-        })
+        }, this.props.selectedNode);
+
+        this.toggleModal()(event);
     };
 
     private toggleModal = (isFileMode?: boolean) => (event: React.MouseEvent<Button>) => {
@@ -95,15 +103,16 @@ class Header extends React.Component<any, IHeaderStates> {
     };
 }
 
-export function mapStateToProps({ TreeReducer }: IApplicationState) {
+export function mapStateToProps({ AsideReducer, TreeReducer }: IApplicationState) {
     return {
+        selectedNode: AsideReducer.node,
         treeData: TreeReducer.data
     }
 }
 
 export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | TreeTypes.TreeAction>) {
     return {
-        add: (node: any) => dispatch(TreeActions.treeAddNode(node)),
+        add: (node: any, parentNode: any) => dispatch(TreeActions.treeAddNode(node, parentNode)),
     }
 }
 

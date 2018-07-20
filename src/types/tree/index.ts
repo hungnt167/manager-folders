@@ -12,12 +12,14 @@ export interface ITreeState {
 }
 
 export interface ITreeAction extends Action{
-    node?: any
+    node?: any,
+    parentNode?: any,
     treeData?: any
 }
 
 export interface ITreeAddNodeAction extends ITreeAction{
-    node: any
+    node: any,
+	parentNode: any
 }
 
 export interface ITreeDeleteNodeAction extends ITreeAction{

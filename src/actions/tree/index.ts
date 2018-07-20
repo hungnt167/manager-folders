@@ -1,8 +1,9 @@
 import * as Types from "types/tree";
 
-export function treeAddNode(node: any): Types.ITreeAddNodeAction {
+export function treeAddNode(node: any, parentNode: any): Types.ITreeAddNodeAction {
     return {
        node,
+       parentNode,
        type: Types.TREE_ADD_NODE_ACTION,
     }
 }

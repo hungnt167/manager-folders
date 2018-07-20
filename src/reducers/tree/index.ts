@@ -1,4 +1,5 @@
 import {Reducer} from "redux";
+import {TreeService} from "services/TreeService";
 import * as Types from "types/tree";
 import {ITreeState} from "types/tree";
 
@@ -43,7 +44,7 @@ const TreeReducer: Reducer<ITreeState> = (
         case Types.SET_TREE_ACTION:
             return {...state, data: [...action.treeData] };
         case Types.TREE_ADD_NODE_ACTION:
-            return {...state, data: [...state.data, action.node] };
+            return {...state, data: [...TreeService.addNode(state.data, action.node, action.parentNode)]};
         case Types.TREE_DELETE_NODE_ACTION:
             return {...state, data: state.data.filter((node: any) => {
                     return node !== action.node;

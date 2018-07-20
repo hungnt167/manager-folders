@@ -7,6 +7,7 @@ import 'rc-tree/assets/index.css';
 import * as React from "react";
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
+import {TreeService} from "services/TreeService";
 import {IApplicationState} from "types";
 import * as AsideTypes from 'types/aside';
 import * as TreeTypes from 'types/tree';
@@ -29,16 +30,8 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
             expandedKeys: info.expandedKeys,
         });
     };
-    public getNode = (Data: any, key: any, callback: any) => {
-        Data.forEach((item: any, index: any, arr:any) => {
-            if (item.key === key) {
-                callback(item, index, arr);
-                return;
-            }
-            if (item.children) {
-                this.getNode(item.children, key, callback);
-            }
-        });
+    public getNode = (data: any, key: any, callback: any) => {
+        return TreeService.getNode(data, key, callback);
     };
     public onDrop = (info: any) => {
         const dropKey = info.node.props.eventKey;
@@ -75,10 +68,7 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
                 ar.splice(i + 1, 0, dragObj);
             }
         } else {
-            this.getNode(data, dropKey, (item: any) => {
-                item.children = item.children || [];
-                item.children.push(dragObj);
-            });
+            TreeService.addNode(data, dragObj, dropObj);
         }
         this.props.setTree(data);
     };
