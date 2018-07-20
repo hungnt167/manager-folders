@@ -1,3 +1,5 @@
+import * as AsideActions from "actions/aside";
+import * as TreeActions from "actions/tree";
 import {Aside} from "components/Aside";
 import {File} from "components/main/File";
 import {Folder} from "components/main/Folder";
@@ -5,7 +7,10 @@ import Tree from "rc-tree";
 import 'rc-tree/assets/index.css';
 import * as React from "react";
 import { connect } from 'react-redux';
+import {Dispatch} from "redux";
 import * as Types from 'types';
+import * as AsideTypes from "types/aside";
+import * as TreeTypes from "types/tree";
 
 export class Main extends Aside {
     public state = {
@@ -23,10 +28,12 @@ export class Main extends Aside {
             this.getNode(this.props.tree, nextProps.node.props.eventKey, (item: any) => {
                 if (item.isFile) {
                     return this.setState({
-                        treeData: [item]
+                        selectedNode: item,
+                        treeData: [],
                     })
                 }
                 this.setState({
+                    selectedNode: null,
                     treeData: item.children
                 })
             });
@@ -35,6 +42,12 @@ export class Main extends Aside {
     }
 
     public render() {
+        const {selectedNode} = this.state;
+
+        if (selectedNode) {
+            return <h5>Reading {JSON.stringify(selectedNode)}</h5>
+        }
+
         return (<div className={"col-md-9 nopadding"}>
             <div className="draggable-container">
                 <Tree
@@ -60,9 +73,11 @@ export function mapStateToProps({ AsideReducer, TreeReducer }: Types.IApplicatio
   }
 }
 
-export function mapDispatchToProps(dispatch: any) {
-  return {
-  }
+export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | TreeTypes.TreeAction>) {
+    return {
+        selectNode: (node: any) => dispatch(AsideActions.asideSelectNode(node)),
+        setTree: (treeData: any) => dispatch(TreeActions.setTree(treeData)),
+    }
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Main);
