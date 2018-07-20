@@ -1,86 +1,24 @@
-import * as Actions from 'actions/panel';
-import classNames from "classnames";
-import Tree, {TreeNode} from 'rc-tree';
+import * as AsideActions from 'actions/aside';
+import * as TreeActions from 'actions/tree';
+import {File} from "components/aside/File";
+import {Folder} from "components/aside/Folder";
+import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import * as React from "react";
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
-import * as Types from 'types/panel';
+import {IApplicationState} from "types";
+import * as AsideTypes from 'types/aside';
+import * as TreeTypes from 'types/tree';
 
-const FolderIcon = ({ selected }:{ selected: any }) => (
-  <span
-    className={classNames(
-      'glyphicon glyphicon-folder-close',
-      selected && 'glyphicon glyphicon-folder-open',
-    )}
-  />
-);
 
-const FileIcon = ({ selected }:{ selected: any }) => (
-  <span
-    className={classNames(
-      'glyphicon glyphicon-file',
-      selected && 'glyphicon glyphicon-eye-open',
-    )}
-  />
-);
-
-const gData = [
-    {
-        "children": [
-            {
-                "children": [
-                    {
-                        "isFile": true,
-                        "key": "0-0-1-0-key",
-                        "title": "File 1"
-                    },
-                    {
-                        "isFile": true,
-                        "key": "0-0-1-1-key",
-                        "title": "File 2"
-                    },
-                    {
-                        "isFile": true,
-                        "key": "0-0-1-2-key",
-                        "title": "File 3"
-                    }
-                ],
-                "key": "0-0-1-key",
-                "title": "Folder 3"
-            },
-            {
-                "key": "0-0-2-key",
-                "title": "Folder 2"
-            }
-        ],
-        "key": "0-0-key",
-        "title": "Folder 1"
-    }
-];
-
-interface IAsideState {
-  autoExpandParent: boolean,
-  expandedKeys: string[],
-  gData: object[],
-  selectedNode: any
-}
-
-// interface IAsideProps {
-//   ref?(): void,
-//   selectNode?(): void
-// }
-
-// interface IAsideDispatch {
-//   selectNode?(): void
-// }
-
-export class Aside extends React.Component<any, IAsideState> {
+export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
     public state = {
+        File,
+        Folder,
         autoExpandParent: true,
         expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
-        gData,
-        selectedNode: null
+        selectedNode: null,
     };
 
     public onDragStart = (info: any) => {
@@ -91,28 +29,28 @@ export class Aside extends React.Component<any, IAsideState> {
             expandedKeys: info.expandedKeys,
         });
     };
+    public getNode = (Data: any, key: any, callback: any) => {
+        Data.forEach((item: any, index: any, arr:any) => {
+            if (item.key === key) {
+                callback(item, index, arr);
+                return;
+            }
+            if (item.children) {
+                this.getNode(item.children, key, callback);
+            }
+        });
+    };
     public onDrop = (info: any) => {
         const dropKey = info.node.props.eventKey;
         const dragKey = info.dragNode.props.eventKey;
         const dropPos = info.node.props.pos.split('-');
         const dropPosition = info.dropPosition - Number(dropPos[dropPos.length - 1]);
         // const dragNodesKeys = info.dragNodesKeys;
-        const loop = (Data: any, key: any, callback: any) => {
-            Data.forEach((item: any, index: any, arr:any) => {
-                if (item.key === key) {
-                    callback(item, index, arr);
-                    return;
-                }
-                if (item.children) {
-                    loop(item.children, key, callback);
-                }
-            });
-        };
-        const data = [...this.state.gData];
+        const data = [...this.props.treeData];
         let dragObj: any;
         let dropObj: any;
         
-        loop(data, dropKey, (item: any) => {
+        this.getNode(data, dropKey, (item: any) => {
             dropObj = item;
         });
 
@@ -120,14 +58,14 @@ export class Aside extends React.Component<any, IAsideState> {
             return;
         }
 
-        loop(data, dragKey, ((item: any, index: any, arr:any) => {
+        this.getNode(data, dragKey, ((item: any, index: any, arr:any) => {
             arr.splice(index, 1);
             dragObj = item;
         }));
         if (info.dropToGap) {
             let ar: any;
             let i: any;
-            loop(data, dropKey, ((item: any, index: any, arr:any) => {
+            this.getNode(data, dropKey, ((item: any, index: any, arr:any) => {
                 ar = arr;
                 i = index;
             }));
@@ -137,14 +75,12 @@ export class Aside extends React.Component<any, IAsideState> {
                 ar.splice(i + 1, 0, dragObj);
             }
         } else {
-            loop(data, dropKey, (item: any) => {
+            this.getNode(data, dropKey, (item: any) => {
                 item.children = item.children || [];
                 item.children.push(dragObj);
             });
         }
-        this.setState({
-            gData: data,
-        });
+        this.props.setTree(data);
     };
     public onExpand = (expandedKeys: any) => {
         this.setState({
@@ -160,19 +96,22 @@ export class Aside extends React.Component<any, IAsideState> {
         }
     };
 
+    public loop(data: any[] = []): any {
+        const FolderElement = this.state.Folder;
+        const FileElement = this.state.File;
+
+        return data.map((item: any) => {
+            if (item.children && item.children.length) {
+                return <FolderElement key={item.key} title={item.title}>{this.loop(item.children)}</FolderElement>
+            }
+
+            return item.isFile
+                ? <FileElement key={item.key} title={item.title}>{this.loop(item.children)}</FileElement>
+                : <FolderElement key={item.key} title={item.title}>{this.loop(item.children)}</FolderElement>
+        });
+    }
+
     public render() {
-        const loop = (data: any) => {
-            return data.map((item: any) => {
-                if (item.children && item.children.length) {
-                    return <TreeNode icon={FolderIcon} key={item.key} title={item.title}>{loop(item.children)}</TreeNode>;
-                }
-
-                const Icon = item.isFile ? FileIcon : FolderIcon;
-
-                return <TreeNode icon={Icon} key={item.key} title={item.title}/>;
-            });
-        };
-
         return (<div className={"col-md-3 nopadding"}>
             <div className="draggable-container">
                 <Tree
@@ -184,21 +123,23 @@ export class Aside extends React.Component<any, IAsideState> {
                     onDrop={this.onDrop}
                     onSelect={this.onSelect}
                 >
-                    {loop(this.state.gData)}
+                    {this.loop(this.props.treeData)}
                 </Tree>
             </div>
         </div>);
     }
 }
 
-export function mapStateToProps() {
-  return {
-  }
+export function mapStateToProps({ TreeReducer }: IApplicationState) {
+    return {
+        treeData: TreeReducer.data
+    }
 }
 
-export function mapDispatchToProps(dispatch: Dispatch<Types.PanelAction>) {
+export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | TreeTypes.TreeAction>) {
   return {
-      selectNode: (node: any) => dispatch(Actions.asideSelectNode(node))
+      selectNode: (node: any) => dispatch(AsideActions.asideSelectNode(node)),
+      setTree: (treeData: any) => dispatch(TreeActions.setTree(treeData)),
   }
 }
 

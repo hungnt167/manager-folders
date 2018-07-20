@@ -1,13 +1,10 @@
+import Reducers from "reducers";
 import * as Redux from 'redux';
-import {IPanelState} from "types/panel";
-import PanelReducer  from "./panel";
-
-export interface IApplicationState {
-    PanelReducer: IPanelState,
-}
+import {IApplicationState} from "types";
 
 const reducers: Redux.Reducer<IApplicationState> = Redux.combineReducers({
-    PanelReducer,
+    AsideReducer: Reducers.AsideReducer,
+    TreeReducer: Reducers.TreeReducer,
 });
 
 export default reducers;
