@@ -1,24 +1,15 @@
 import * as TreeActions from "actions/tree";
+import {EditModal as AddModal} from "components/EditModal";
 import * as React from 'react';
-import {Button, FormControl, FormGroup, MenuItem, Modal, Nav, Navbar, NavDropdown} from 'react-bootstrap';
+import {Button, MenuItem, Nav, Navbar, NavDropdown} from 'react-bootstrap';
 import {connect} from "react-redux";
 import {Dispatch} from "redux";
 import * as AsideTypes from "types/aside";
 import {IApplicationState} from "types/index";
 import * as TreeTypes from "types/tree";
 
-export interface IHeaderStates {
-    isFileMode: boolean
-    name: string
-    show: boolean,
-}
-
-class Header extends React.Component<any, IHeaderStates> {
-    public state = {
-        isFileMode: true,
-        name: '',
-        show: false
-    };
+class Header extends React.Component<any, any> {
+    public addModal: AddModal;
 
     public render() {
         return (
@@ -45,61 +36,19 @@ class Header extends React.Component<any, IHeaderStates> {
 
                     </Navbar.Collapse>
                 </Navbar>
-                <Modal
-                    show={this.state.show}
-                    onHide={this.toggleModal}
-                    container={this}
-                    aria-labelledby="contained-modal-title"
-                    bsSize={"small"}
-                >
-                    <Modal.Header closeButton={true}>
-                        <Modal.Title id="contained-modal-title">
-                            Add new {this.state.isFileMode ? 'file' : 'folder' }
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <FormGroup
-                            controlId="formBasicText"
-                        >
-                            <FormControl
-                                autoFocus={true}
-                                onChange={this.onChangeName}
-                                value={this.state.name}
-                                type="text"
-                                placeholder="Enter name"
-                            />
-                        </FormGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={this.toggleModal()}>Close</Button>
-                        <Button bsStyle="primary" onClick={this.confirmAdd()}>Add</Button>
-                    </Modal.Footer>
-                </Modal>
+                <AddModal ref={this.setAddModal} onConfirm={this.confirmAdd}/>
             </React.Fragment>
         );
     }
 
-    public onChangeName = (e:any) => {
-        this.setState({ name: e.target.value });
-    };
+    public setAddModal = (addModal: any) => (this.addModal = addModal);
 
-    public confirmAdd = () => (event: React.MouseEvent<Button>) => {
-        this.props.add({
-            isFile: this.state.isFileMode,
-            title: this.state.name
-        }, this.props.selectedNode);
-
-        this.toggleModal()(event);
+    public confirmAdd = (nodeData: any) => {
+        this.props.add(nodeData, this.props.selectedNode);
     };
 
     private toggleModal = (isFileMode?: boolean) => (event: React.MouseEvent<Button>) => {
-        const newState: any = { show: !this.state.show };
-
-        if (isFileMode !== undefined) {
-            newState.isFileMode = isFileMode;
-        }
-
-        this.setState(newState);
+        this.addModal.toggleModal(isFileMode)(event);
     };
 }
 

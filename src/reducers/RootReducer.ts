@@ -4,6 +4,7 @@ import {IApplicationState} from "types";
 
 const reducers: Redux.Reducer<IApplicationState> = Redux.combineReducers({
     AsideReducer: Reducers.AsideReducer,
+    MainReducer: Reducers.MainReducer,
     TreeReducer: Reducers.TreeReducer,
 });
 

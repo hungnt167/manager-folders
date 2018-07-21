@@ -18,7 +18,8 @@ export interface IAsideStates {
     Folder: any,
     File: any,
     autoExpandParent: boolean,
+    buffer?: any,
     expandedKeys: string[],
-    selectedNode: any
+    selectedNode?: any
     treeData?: object[],
 }

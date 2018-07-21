@@ -1,6 +1,7 @@
-import * as AsideActions from "actions/aside";
+import * as MainActions from "actions/main";
 import * as TreeActions from "actions/tree";
 import {Aside} from "components/Aside";
+import {EditModal} from "components/EditModal";
 import {File} from "components/main/File";
 import {Folder} from "components/main/Folder";
 import Tree from "rc-tree";
@@ -9,31 +10,31 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import {Dispatch} from "redux";
 import * as Types from 'types';
-import * as AsideTypes from "types/aside";
+import * as MainTypes from "types/main";
 import * as TreeTypes from "types/tree";
 
 export class Main extends Aside {
+    public listenAreas: string[] = ['main'];
+
     public state = {
         File,
         Folder,
         autoExpandParent: true,
+        buffer: false,
         expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
-        selectedNode: null,
         treeData: []
     };
 
 
     public componentWillReceiveProps(nextProps: Readonly<any>, nextContext: any): void {
-        if (nextProps.node) {
-            this.getNode(this.props.tree, nextProps.node.props.eventKey, (item: any) => {
+        if (nextProps.parent) {
+            this.getNode(this.props.treeData, nextProps.parent.props.eventKey, (item: any) => {
                 if (item.isFile) {
                     return this.setState({
-                        selectedNode: item,
                         treeData: [],
                     })
                 }
                 this.setState({
-                    selectedNode: null,
                     treeData: item.children
                 })
             });
@@ -42,40 +43,45 @@ export class Main extends Aside {
     }
 
     public render() {
-        const {selectedNode} = this.state;
+        const {buffer} = this.state;
 
-        if (selectedNode) {
-            return <h5>Reading {JSON.stringify(selectedNode)}</h5>
-        }
-
-        return (<div className={"col-md-9 nopadding"}>
+        return (<div className={"col-md-9 nopadding"} id="main" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={1}>
             <div className="draggable-container">
-                <Tree
-                    expandedKeys={this.state.expandedKeys}
-                    onExpand={this.onExpand} autoExpandParent={this.state.autoExpandParent}
-                    draggable={true}
-                    onDragStart={this.onDragStart}
-                    onDragEnter={this.onDragEnter}
-                    onDrop={this.onDrop}
-                    onSelect={this.onSelect}
-                >
-                    {this.loop(this.state.treeData)}
-                </Tree>
+                {
+                    buffer ? <h5>Reading {buffer}</h5> : (    
+                        <React.Fragment>
+                            <Tree
+                            expandedKeys={this.state.expandedKeys}
+                            onExpand={this.onExpand} autoExpandParent={this.state.autoExpandParent}
+                            draggable={true}
+                            onDragStart={this.onDragStart}
+                            onDragEnter={this.onDragEnter}
+                            onDrop={this.onDrop}
+                            onSelect={this.onSelect}
+                            onDoubleClick={this.onNodeDoubleClick}
+                            >
+                                {this.loop(this.state.treeData)}
+                            </Tree>
+                            <EditModal ref={this.setEditModal} onConfirm={this.confirmSave}/>
+                        </React.Fragment>
+                    )
+                }
             </div>
         </div>);
     }
 }
 
-export function mapStateToProps({ AsideReducer, TreeReducer }: Types.IApplicationState) {
+export function mapStateToProps({ AsideReducer, MainReducer, TreeReducer }: Types.IApplicationState) {
   return {
-    node: AsideReducer.node,
-    tree: TreeReducer.data
+    parent: AsideReducer.node,
+    selectedNode: MainReducer.node,
+    treeData: TreeReducer.data
   }
 }
 
-export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | TreeTypes.TreeAction>) {
+export function mapDispatchToProps(dispatch: Dispatch<MainTypes.MainAction | TreeTypes.TreeAction>) {
     return {
-        selectNode: (node: any) => dispatch(AsideActions.asideSelectNode(node)),
+        selectNode: (node: any) => dispatch(MainActions.selectNode(node)),
         setTree: (treeData: any) => dispatch(TreeActions.setTree(treeData)),
     }
 }

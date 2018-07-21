@@ -2,6 +2,7 @@ import * as AsideActions from 'actions/aside';
 import * as TreeActions from 'actions/tree';
 import {File} from "components/aside/File";
 import {Folder} from "components/aside/Folder";
+import {EditModal} from "components/EditModal";
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import * as React from "react";
@@ -14,12 +15,14 @@ import * as TreeTypes from 'types/tree';
 
 
 export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
+    public editModal: EditModal;
+    public listenAreas: string[] = ['aside'];
+
     public state = {
         File,
         Folder,
         autoExpandParent: true,
         expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
-        selectedNode: null,
     };
 
     public onDragStart = (info: any) => {
@@ -81,8 +84,19 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
 
     public onSelect = (selectedKeys: any, e:{selected: boolean, selectedNodes: any, node: any, event: any, nativeEvent: any}) => {
         if (e.node) {
-            this.setState({selectedNode: e.node});
             this.props.selectNode(e.node);
+        }
+    };
+
+    public onNodeDoubleClick = async (e: any, node: any) => {
+        
+        if (node) {
+            await this.editModal.setState({
+                isAddMode: false,
+                isFileMode : (node instanceof this.state.File),
+                name: node.props.title,
+            })
+            this.editModal.toggleModal()(e);
         }
     };
 
@@ -101,8 +115,34 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
         });
     }
 
+    public onKeyUp = (selectedNode: any) => async (e: any) => {
+        if (!selectedNode) {
+            return;
+        }
+
+        if (this.listenAreas.indexOf(e.target.id) === -1) {
+            return;
+        }
+
+        if (['Backspace'].indexOf(e.key) !== -1) {
+            return this.setState({ buffer: null })
+        };
+
+
+        if (['Delete'].indexOf(e.key) !== -1) {
+            const newTree = this.props.treeData;
+            TreeService.removeNode(newTree, selectedNode);
+            await this.props.selectNode(null);
+            return this.props.setTree(newTree);
+        };        
+         
+        if (['Enter'].indexOf(e.key) !== -1) {
+            this.setState({ buffer: JSON.stringify(selectedNode.props) })
+        };
+    }
+
     public render() {
-        return (<div className={"col-md-3 nopadding"}>
+        return (<div className={"col-md-3 nopadding"} id="aside" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={0}>
             <div className="draggable-container">
                 <Tree
                     expandedKeys={this.state.expandedKeys}
@@ -112,23 +152,34 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
                     onDragEnter={this.onDragEnter}
                     onDrop={this.onDrop}
                     onSelect={this.onSelect}
+                    onDoubleClick={this.onNodeDoubleClick}
                 >
                     {this.loop(this.props.treeData)}
                 </Tree>
+                <EditModal ref={this.setEditModal} onConfirm={this.confirmSave}/>
             </div>
         </div>);
     }
+
+    public setEditModal = (editModal: any) => (this.editModal = editModal);
+
+    public confirmSave = (nodeData: any) => {
+        const newTree = this.props.treeData;
+        TreeService.updateNode(newTree, this.props.selectedNode, nodeData, false);
+        this.props.setTree(newTree);
+    };
 }
 
-export function mapStateToProps({ TreeReducer }: IApplicationState) {
+export function mapStateToProps({ AsideReducer, TreeReducer }: IApplicationState) {
     return {
+        selectedNode: AsideReducer.node, 
         treeData: TreeReducer.data
     }
 }
 
 export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | TreeTypes.TreeAction>) {
   return {
-      selectNode: (node: any) => dispatch(AsideActions.asideSelectNode(node)),
+      selectNode: (node: any) => dispatch(AsideActions.selectNode(node)),
       setTree: (treeData: any) => dispatch(TreeActions.setTree(treeData)),
   }
 }
