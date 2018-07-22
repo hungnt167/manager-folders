@@ -22,7 +22,7 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
         File,
         Folder,
         autoExpandParent: true,
-        expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
+        expandedKeys: ['0-0-key'],
     };
 
     public onDragStart = (info: any) => {
@@ -137,12 +137,27 @@ export class Aside extends React.Component<any, AsideTypes.IAsideStates> {
         };        
          
         if (['Enter'].indexOf(e.key) !== -1) {
-            this.setState({ buffer: JSON.stringify(selectedNode.props) })
+            if (selectedNode instanceof this.state.File) {
+                return this.setState({ buffer: JSON.stringify(selectedNode.props) })
+            }
+
+            let realNode: any;
+            const nodeKey = selectedNode.props ? selectedNode.props.eventKey: selectedNode.key;
+
+            TreeService.getNode(this.props.treeData, nodeKey, ((item: any, index: any, arr:any) => {
+                realNode = item;
+            }));
+
+            if (this.props.asideSelectNode) {
+                /*const expandedKeys = [...this.state.expandedKeys, realNode.key]
+                this.setState({expandedKeys});*/
+                this.props.asideSelectNode(realNode);
+            }
         };
     }
 
     public render() {
-        return (<div className={"col-md-3 nopadding"} id="aside" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={0}>
+        return (<div className={"col-md-3 nopadding"} id="aside" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={2}>
             <div className="draggable-container">
                 <Tree
                     expandedKeys={this.state.expandedKeys}

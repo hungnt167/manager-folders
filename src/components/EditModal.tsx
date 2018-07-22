@@ -42,6 +42,7 @@ export class EditModal extends React.Component<IEditModalProps, IEditModalStates
                             <FormControl
                                 autoFocus={true}
                                 onChange={this.onChangeName}
+                                onKeyPress={this.onKeyPressName}
                                 value={this.state.name}
                                 type="text"
                                 placeholder="Enter name"
@@ -59,9 +60,16 @@ export class EditModal extends React.Component<IEditModalProps, IEditModalStates
         this.setState({ name: e.target.value });
     };
 
+    public onKeyPressName = (e:any) => {
+        if (e.key === 'Enter') {
+            this.confirm()(e);
+        }
+    };
+
     public confirm = () => (event: React.MouseEvent<Button>) => {
         if (this.props.onConfirm) {
         	this.props.onConfirm({
+                children: [],
 	            isFile: this.state.isFileMode,
 	            title: this.state.name
 	        });

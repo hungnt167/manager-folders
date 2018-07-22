@@ -1,3 +1,4 @@
+import * as AsideActions from "actions/aside";
 import * as MainActions from "actions/main";
 import * as TreeActions from "actions/tree";
 import {Aside} from "components/Aside";
@@ -10,6 +11,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import {Dispatch} from "redux";
 import * as Types from 'types';
+import * as AsideTypes from "types/aside";
 import * as MainTypes from "types/main";
 import * as TreeTypes from "types/tree";
 
@@ -21,22 +23,30 @@ export class Main extends Aside {
         Folder,
         autoExpandParent: true,
         buffer: false,
-        expandedKeys: ['0-0-key', '0-0-0-key', '0-0-0-0-key'],
+        expandedKeys: ['0-0-key'],
         treeData: []
     };
 
 
     public componentWillReceiveProps(nextProps: Readonly<any>, nextContext: any): void {
         if (nextProps.parent) {
-            this.getNode(this.props.treeData, nextProps.parent.props.eventKey, (item: any) => {
+            const parentKey = nextProps.parent.props ? nextProps.parent.props.eventKey : nextProps.parent.key;
+            this.getNode(this.props.treeData, parentKey, (item: any) => {
                 if (item.isFile) {
                     return this.setState({
                         treeData: [],
                     })
                 }
-                this.setState({
-                    treeData: item.children
-                })
+
+                const treeData: any[] = [];
+
+                item.children.forEach((child: any) => {
+                    const newChild: any = {...child};
+                    newChild.children = [];
+                    treeData.push(newChild);
+                });
+
+                this.setState({treeData});
             });
 
         }
@@ -45,7 +55,7 @@ export class Main extends Aside {
     public render() {
         const {buffer} = this.state;
 
-        return (<div className={"col-md-9 nopadding"} id="main" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={1}>
+        return (<div className={"col-md-9 nopadding"} id="main" onKeyUp={this.onKeyUp(this.props.selectedNode)} tabIndex={3}>
             <div className="draggable-container">
                 {
                     buffer ? <h5>Reading {buffer}</h5> : (    
@@ -79,8 +89,9 @@ export function mapStateToProps({ AsideReducer, MainReducer, TreeReducer }: Type
   }
 }
 
-export function mapDispatchToProps(dispatch: Dispatch<MainTypes.MainAction | TreeTypes.TreeAction>) {
+export function mapDispatchToProps(dispatch: Dispatch<AsideTypes.AsideAction | MainTypes.MainAction | TreeTypes.TreeAction>) {
     return {
+        asideSelectNode: (node: any) => dispatch(AsideActions.selectNode(node)),
         selectNode: (node: any) => dispatch(MainActions.selectNode(node)),
         setTree: (treeData: any) => dispatch(TreeActions.setTree(treeData)),
     }

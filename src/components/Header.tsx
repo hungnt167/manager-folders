@@ -8,7 +8,7 @@ import * as AsideTypes from "types/aside";
 import {IApplicationState} from "types/index";
 import * as TreeTypes from "types/tree";
 
-class Header extends React.Component<any, any> {
+export class Header extends React.Component<any, any> {
     public addModal: AddModal;
 
     public render() {
@@ -47,7 +47,7 @@ class Header extends React.Component<any, any> {
         this.props.add(nodeData, this.props.selectedNode);
     };
 
-    private toggleModal = (isFileMode?: boolean) => (event: React.MouseEvent<Button>) => {
+    public toggleModal = (isFileMode?: boolean) => (event: React.MouseEvent<Button>) => {
         this.addModal.toggleModal(isFileMode)(event);
     };
 }
